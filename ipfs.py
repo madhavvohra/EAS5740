@@ -1,43 +1,39 @@
 import requests
 import json
-import base64
+# You do not need to import 'base64' or 'web3' for this version.
 
-# --- Configuration with Your Credentials ---
-INFURA_PROJECT_ID = "155d356f9c664c86b0f76bdd4cf3a362"
-INFURA_PROJECT_SECRET = "jHeJ6AV8QfloPuusDT19gMVV3TwK3EzfZJ22UqFwBiC8WSD2v2hIeQ"
+# --- Configuration with Pinata Credentials ---
+PINATA_API_KEY = "b599a6582d1f01b083a6"
+PINATA_SECRET_API_KEY = "3d71b092a99b58e2e3c9f77f9bff4744d769d36af40c3266cd609c2a4eb9b1f7"
 
-# Infura IPFS Upload Endpoint
-INFURA_IPFS_UPLOAD_URL = "https://ipfs.infura.io:5001/api/v0/add"
+# Pinata IPFS Upload Endpoint for JSON data
+PINATA_IPFS_UPLOAD_URL = "https://api.pinata.cloud/pinning/pinJSONToIPFS"
 
-# Public IPFS Gateway (SWITCHED TO IPFS.IO)
+# Public IPFS Gateway (Working for retrieval)
 IPFS_GATEWAY_URL = "https://ipfs.io/ipfs/{content ID}"
 
 def pin_to_ipfs(data):
   assert isinstance(data,dict), f"Error pin_to_ipfs expects a dictionary"
   #YOUR CODE HERE
 
-  # Convert the Python dictionary to a JSON string
+  # Convert the Python dictionary to JSON
   json_data = json.dumps(data)
   
-  # --- Revert to requests' built-in Basic Auth tuple ---
-  # The 'requests' library automatically encodes this tuple to Base64
-  # for the 'Authorization: Basic' header.
-  auth = (INFURA_PROJECT_ID, INFURA_PROJECT_SECRET)
-  # ----------------------------------------------------
-  
-  # Prepare the data as a file-like object for the POST request
-  files = {
-      'file': ('data.json', json_data, 'application/json')
+  # Pinata requires the JSON data to be sent directly in the request body
+  # with specific headers for authentication.
+  headers = {
+      'Content-Type': 'application/json',
+      # Pinata uses custom header names for API key authentication
+      'pinata_api_key': PINATA_API_KEY,
+      'pinata_secret_api_key': PINATA_SECRET_API_KEY
   }
   
-  # Send the request using the 'auth' parameter
-  # Note: Removed the 'import base64' line from the top of the file
-  # as it is no longer needed.
-  response = requests.post(INFURA_IPFS_UPLOAD_URL, files=files, auth=auth)
-  response.raise_for_status() 
+  # The request sends the JSON string in the 'data' parameter, using the headers for authentication
+  response = requests.post(PINATA_IPFS_UPLOAD_URL, data=json_data, headers=headers)
+  response.raise_for_status() # Raise an exception for bad status codes (4xx or 5xx)
 
-  # The response is JSON and contains the Hash (CID)
-  cid = response.json()['Hash']
+  # Pinata's response is JSON and contains the CID in the 'IpfsHash' field
+  cid = response.json()['IpfsHash']
 
   return cid
 
@@ -45,12 +41,12 @@ def get_from_ipfs(cid,content_type="json"):
   assert isinstance(cid,str), f"get_from_ipfs accepts a cid in the form of a string"
   #YOUR CODE HERE 
 
-  # Construct the retrieval URL using the new ipfs.io public gateway
+  # Construct the retrieval URL using the working public gateway
   url = IPFS_GATEWAY_URL.replace("{content ID}", cid)
 
   # Use a simple GET request to retrieve the content
   response = requests.get(url)
-  response.raise_for_status() # Raise an exception for bad status codes
+  response.raise_for_status() 
 
   # The content is returned as a JSON string; convert it to a Python dictionary
   data = response.json()
