@@ -1,6 +1,6 @@
 import requests
 import json
-import base64 # <-- Added for explicit Base64 authentication
+import base64
 
 # --- Configuration with Your Credentials ---
 INFURA_PROJECT_ID = "155d356f9c664c86b0f76bdd4cf3a362"
@@ -19,21 +19,21 @@ def pin_to_ipfs(data):
   # Convert the Python dictionary to a JSON string
   json_data = json.dumps(data)
   
-  # Explicitly format credentials for Basic Authentication header
-  credentials = f"{INFURA_PROJECT_ID}:{INFURA_PROJECT_SECRET}"
-  encoded_credentials = base64.b64encode(credentials.encode()).decode()
-  
-  headers = {
-      'Authorization': f'Basic {encoded_credentials}'
-  }
+  # --- Revert to requests' built-in Basic Auth tuple ---
+  # The 'requests' library automatically encodes this tuple to Base64
+  # for the 'Authorization: Basic' header.
+  auth = (INFURA_PROJECT_ID, INFURA_PROJECT_SECRET)
+  # ----------------------------------------------------
   
   # Prepare the data as a file-like object for the POST request
   files = {
       'file': ('data.json', json_data, 'application/json')
   }
   
-  # Send the request using the custom headers
-  response = requests.post(INFURA_IPFS_UPLOAD_URL, files=files, headers=headers)
+  # Send the request using the 'auth' parameter
+  # Note: Removed the 'import base64' line from the top of the file
+  # as it is no longer needed.
+  response = requests.post(INFURA_IPFS_UPLOAD_URL, files=files, auth=auth)
   response.raise_for_status() 
 
   # The response is JSON and contains the Hash (CID)
