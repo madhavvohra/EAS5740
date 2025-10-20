@@ -1,10 +1,9 @@
 import requests
 import json
-# You do not need to import 'base64' or 'web3' for this version.
 
 # --- Configuration with Pinata Credentials ---
-PINATA_API_KEY = "b599a6582d1f01b083a6"
-PINATA_SECRET_API_KEY = "3d71b092a99b58e2e3c9f77f9bff4744d769d36af40c3266cd609c2a4eb9b1f7"
+PINATA_API_KEY = "465a11f9bea9c377eb98"
+PINATA_SECRET_API_KEY = "1ba9ed8912bd4028b35322386eda900cc360c897cdade3763536c384dfec4911"
 
 # Pinata IPFS Upload Endpoint for JSON data
 PINATA_IPFS_UPLOAD_URL = "https://api.pinata.cloud/pinning/pinJSONToIPFS"
