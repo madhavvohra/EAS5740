@@ -42,7 +42,7 @@ def get_from_ipfs(cid,content_type="json"):
   assert isinstance(cid,str), f"get_from_ipfs accepts a cid in the form of a string"
   #YOUR CODE HEREE
 	
-  time.sleep(5)
+  time.sleep(10)
 
   # Construct the retrieval URL using the working public gateway
   url = IPFS_GATEWAY_URL.replace("{content ID}", cid)
