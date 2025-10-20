@@ -26,7 +26,7 @@ def connect_with_middleware(contract_json):
     assert w3.is_connected(), f"Failed to connect to BNB Testnet at {BNB_TESTNET_URL}"
 
     with open(contract_json, "r") as f:
-      d = json.load(f)
+    	d = json.load(f)
     	d = d['bsc']
     	address = d['address']
     	abi = d['abi']
