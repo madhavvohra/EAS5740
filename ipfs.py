@@ -1,5 +1,6 @@
 import requests
 import json
+import base64
 
 # --- Configuration with Your Credentials ---
 INFURA_PROJECT_ID = "155d356f9c664c86b0f76bdd4cf3a362"
