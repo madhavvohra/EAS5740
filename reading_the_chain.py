@@ -77,13 +77,20 @@ def is_ordered_block(w3, block_num):
   if not block.transactions:
       return True
 
-  base_fee_per_gas = block.baseFeePerGas
-  
   priority_fees = []
 
-  for tx in block.transactions:
-      fee = calculate_priority_fee(tx, base_fee_per_gas)
-      priority_fees.append(fee)
+  # FIX 1: Handle pre-EIP-1559 blocks (which lack baseFeePerGas)
+  if hasattr(block, 'baseFeePerGas') and block.baseFeePerGas is not None:
+      # Post-EIP-1559 logic: calculate fee based on EIP-1559 rules
+      base_fee_per_gas = block.baseFeePerGas
+      for tx in block.transactions:
+          fee = calculate_priority_fee(tx, base_fee_per_gas)
+          priority_fees.append(fee)
+  else:
+      # Pre-EIP-1559 logic: ordering is based solely on gasPrice
+      for tx in block.transactions:
+          gas_price = tx.get('gasPrice', 0)
+          priority_fees.append(gas_price)
   
   ordered = all(
       priority_fees[i] >= priority_fees[i+1] 
@@ -108,7 +115,8 @@ def get_contract_values(contract, admin_address, owner_address):
   https://testnet.bscscan.com/address/0xaA7CAaDA823300D18D3c43f65569a47e78220073
   """
   default_admin_role = int.to_bytes(0, 32, byteorder="big")
-  w3 = contract.web3 
+  # FIX 2: Change contract.web3 to contract.w3 for wider compatibility
+  w3 = contract.w3 
 
   # TODO complete the following lines by performing contract calls
   onchain_root = contract.functions.merkleRoot().call()  
