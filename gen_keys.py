@@ -41,11 +41,15 @@ def sign_message(challenge, filename="secret_key.txt"):
 
 if __name__ == "__main__":
     
-    key_filename = "secret_key.txt"
+    # FIX: Use the absolute path that the test runner expects for persistence
+    key_filename = "/home/codio/workspace/.guides/student_code/EAS5740/secret_key.txt"
     
     # --- CRITICAL: Key Generation and Persistence for Assignment ---
     # This block ensures the key file exists and is populated for the autograder.
     if not os.path.exists(key_filename) or os.stat(key_filename).st_size == 0:
+        # Ensure the directories exist before attempting to write the file
+        os.makedirs(os.path.dirname(key_filename), exist_ok=True)
+        
         # Generate new account
         acct = eth_account.Account.create()
         private_key = acct.key.hex()
@@ -59,5 +63,6 @@ if __name__ == "__main__":
     
     for i in range(4):
         challenge = os.urandom(64)
-        sig, addr= sign_message(challenge=challenge)
+        # Pass the full key_filename path to ensure it reads the file we just created
+        sig, addr= sign_message(challenge=challenge, filename=key_filename)
         print( addr )
