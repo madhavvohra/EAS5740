@@ -12,7 +12,8 @@ def sign(m):
     private_key = account_object.key  # Eth account private key
 
     # TODO sign the given message "m"
-    message = encode_defunct(m)  # Encode the message
+    # FIX: Explicitly encode the string 'm' to bytes before passing to encode_defunct
+    message = encode_defunct(m.encode('utf-8'))  # Encode the message
     signed_message = account_object.sign_message(message)  # Sign the message
 
 
@@ -33,7 +34,8 @@ def verify(m, public_key, signed_message):
     w3 = Web3()
 
     # TODO verify the 'signed_message' is valid given the original message 'm' and the signers 'public_key'
-    message = encode_defunct(m)  # Encode the message
+    # FIX: Explicitly encode the string 'm' to bytes before passing to encode_defunct
+    message = encode_defunct(m.encode('utf-8'))  # Encode the message
     
     # Recover the address from the signature and message
     signer = eth_account.Account.recover_message(message, signature=signed_message.signature.hex())
