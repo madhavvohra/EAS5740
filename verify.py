@@ -6,9 +6,8 @@ from web3.middleware import ExtraDataToPOAMiddleware
 from eth_account import Account
 import os
 
-# --- Configuration (REPLACE THESE PLACEHOLDERS) ---
 # Avalanche Fuji Testnet RPC URL (Using a common public link for reliability)
-AVAX_FUJI_RPC_URL = "https://api.avax-test.network/ext/bc/C/rpc" 
+AVAX_FUJI_RPC_URL = "https://avalanche-fuji.g.alchemy.com/v2/MmEXl5ITY4yo6sSOr6sNj" 
 
 # Private key of the funded account (from gen_keys.py)
 # This key will pay for the gas fees.
@@ -18,9 +17,7 @@ MINTER_PRIVATE_KEY = "0xb26f9c4751e702ac2aa81e4fd4c0581a02fcbab086755b49c97c4dc0
 NFT_CONTRACT_ADDRESS = "0x85ac2e065d4526FBeE6a2253389669a12318A412"
 # ABI for the contract (Assumed to be loaded from a file or predefined)
 # Since the ABI file is not provided, we will define a minimal one with the 'claim' function.
-# NOTE: If your test environment provides an ABI file, you must load it here.
 
-# --- Minimal ABI for claim() function (for compilation) ---
 NFT_ABI = [
     {
         "inputs": [
