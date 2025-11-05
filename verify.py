@@ -10,10 +10,8 @@ def sign_challenge( challenge ):
 
     acct = w3.eth.account.from_key(sk)
 
-    # Encode the message for signing (must be done before signing)
     message_to_sign = encode_defunct(challenge) 
-    
-    # Sign the encoded message using the account's private key (acct.key is the private key bytes)
+
     signed_message = w3.eth.account.sign_message( message_to_sign , private_key = acct.key )
 
     return acct.address, signed_message.signature
