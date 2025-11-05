@@ -10,8 +10,14 @@ def sign_challenge( challenge ):
 
     acct = w3.eth.account.from_key(sk)
 
-    message_to_sign = encode_defunct(challenge) 
-
+    # Convert challenge to a hexadecimal string before encoding. This resolves type ambiguity
+    # when the challenge is passed as raw bytes from the autograder.
+    challenge_hex = Web3.to_hex(challenge)
+    
+    # Encode the message using the hex string.
+    message_to_sign = encode_defunct(challenge_hex) 
+    
+    # Sign the encoded message using the account's private key (acct.key is the private key bytes)
     signed_message = w3.eth.account.sign_message( message_to_sign , private_key = acct.key )
 
     return acct.address, signed_message.signature
@@ -21,11 +27,18 @@ def verify_sig():
     
     challenge_bytes = random.randbytes(32)
 
+    # We pass the raw bytes (challenge_bytes) to sign_challenge.
+    # We DO NOT pre-encode it here, as that causes type issues when calling sign_challenge.
     address, sig = sign_challenge( challenge_bytes ) 
 
     w3 = Web3()
 
-    return w3.eth.account.recover_message( encode_defunct(challenge_bytes) , signature=sig ) == address
+    # The recover function needs the *original* message, which must be encoded.
+    # Since sign_challenge converted the challenge to hex, we must do the same here 
+    # for the recovery to match the hash.
+    challenge_hex = Web3.to_hex(challenge_bytes)
+    
+    return w3.eth.account.recover_message( encode_defunct(challenge_hex) , signature=sig ) == address
 
 
 if __name__ == '__main__':
