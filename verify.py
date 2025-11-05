@@ -21,12 +21,11 @@ def verify_sig():
     
     challenge_bytes = random.randbytes(32)
 
-    challenge = encode_defunct(challenge_bytes)
-    address, sig = sign_challenge( challenge )
+    address, sig = sign_challenge( challenge_bytes ) 
 
     w3 = Web3()
 
-    return w3.eth.account.recover_message( challenge , signature=sig ) == address
+    return w3.eth.account.recover_message( encode_defunct(challenge_bytes) , signature=sig ) == address
 
 
 if __name__ == '__main__':
