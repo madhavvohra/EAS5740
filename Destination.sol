@@ -24,9 +24,9 @@ contract Destination is AccessControl {
     }
 
     function wrap(address _underlying_token, address _recipient, uint256 _amount ) public onlyRole(WARDEN_ROLE) {
-        // 1. Check if the underlying asset is registered.
+        // 1. Check if the underlying asset is registered. (Simplified revert string)
         address wrappedTokenAddress = underlying_tokens[_underlying_token];
-        require(wrappedTokenAddress != address(0), "Destination: Underlying asset not registered");
+        require(wrappedTokenAddress != address(0), "Underlying asset not registered"); 
         
         // 2. Mint the tokens.
         BridgeToken wrappedToken = BridgeToken(wrappedTokenAddress);
@@ -39,11 +39,10 @@ contract Destination is AccessControl {
     function unwrap(address _wrapped_token, address _recipient, uint256 _amount ) public {
         // 1. Check if the wrapped token is registered and retrieve the underlying address.
         address underlyingTokenAddress = wrapped_tokens[_wrapped_token];
-        require(underlyingTokenAddress != address(0), "Destination: Invalid wrapped token address");
+        require(underlyingTokenAddress != address(0), "Invalid wrapped token address"); // Simplified revert string
         
         // 2. Burn the tokens from the caller (msg.sender).
         BridgeToken wrappedToken = BridgeToken(_wrapped_token);
-        // This relies on ERC20Burnable.burn(amount) which burns from msg.sender.
         wrappedToken.burn(_amount);
         
         // 3. Emit the Unwrap event
@@ -51,8 +50,8 @@ contract Destination is AccessControl {
     }
 
     function createToken(address _underlying_token, string memory name, string memory symbol ) public onlyRole(CREATOR_ROLE) returns(address) {
-        // 1. Ensure the asset is not already registered.
-        require(underlying_tokens[_underlying_token] == address(0), "Destination: Underlying asset already registered");
+        // 1. Ensure the asset is not already registered. (Simplified revert string)
+        require(underlying_tokens[_underlying_token] == address(0), "Underlying asset already registered");
         
         // 2. Deploy a new BridgeToken contract, passing THIS contract's address as the admin/minter.
         BridgeToken newToken = new BridgeToken(_underlying_token, name, symbol, address(this));
