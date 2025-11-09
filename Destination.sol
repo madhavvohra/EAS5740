@@ -24,7 +24,7 @@ contract Destination is AccessControl {
     }
 
     function wrap(address _underlying_token, address _recipient, uint256 _amount ) public onlyRole(WARDEN_ROLE) {
-        // 1. Look up the wrapped token address and check for registration.
+        // 1. Check if the underlying asset is registered.
         address wrappedTokenAddress = underlying_tokens[_underlying_token];
         require(wrappedTokenAddress != address(0), "Destination: Underlying asset not registered");
         
@@ -32,17 +32,18 @@ contract Destination is AccessControl {
         BridgeToken wrappedToken = BridgeToken(wrappedTokenAddress);
         wrappedToken.mint(_recipient, _amount);
         
-        // 3. Emit the Wrap event
+        // 3. Emit the Wrap event.
         emit Wrap(_underlying_token, wrappedTokenAddress, _recipient, _amount);
     }
 
     function unwrap(address _wrapped_token, address _recipient, uint256 _amount ) public {
-        // 1. Look up the underlying token address and check for registration.
+        // 1. Check if the wrapped token is registered and retrieve the underlying address.
         address underlyingTokenAddress = wrapped_tokens[_wrapped_token];
         require(underlyingTokenAddress != address(0), "Destination: Invalid wrapped token address");
         
         // 2. Burn the tokens from the caller (msg.sender).
         BridgeToken wrappedToken = BridgeToken(_wrapped_token);
+        // This relies on ERC20Burnable.burn(amount) which burns from msg.sender.
         wrappedToken.burn(_amount);
         
         // 3. Emit the Unwrap event
@@ -53,7 +54,7 @@ contract Destination is AccessControl {
         // 1. Ensure the asset is not already registered.
         require(underlying_tokens[_underlying_token] == address(0), "Destination: Underlying asset already registered");
         
-        // 2. Deploy a new BridgeToken contract, giving THIS contract MINTER_ROLE.
+        // 2. Deploy a new BridgeToken contract, passing THIS contract's address as the admin/minter.
         BridgeToken newToken = new BridgeToken(_underlying_token, name, symbol, address(this));
         
         address newTokenAddress = address(newToken);
