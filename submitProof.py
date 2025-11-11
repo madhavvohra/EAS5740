@@ -157,35 +157,36 @@ def sign_challenge(challenge):
 def send_signed_msg(proof, random_leaf):
     """
         Takes a Merkle proof of a leaf, and that leaf (in bytes32 format)
-        builds, signs, and sends a transaction claiming that leaf (prime)
-        on the contract.
+        builds signs and sends a transaction claiming that leaf (prime)
+        on the contract
     """
     chain = 'bsc'
-    
+
     acct = get_account()
     address, abi = get_contract_info(chain)
     w3 = connect_to(chain)
-    
-    # Instantiate the contract
+
     contract = w3.eth.contract(address=address, abi=abi)
     
-    # The leaf must be the bytes32 version of the prime, which random_leaf already is.
-    # The proof must be a list of bytes32 objects.
-
-    # Build the transaction to call submit(proof, leaf)
     transaction = contract.functions.submit(proof, random_leaf).build_transaction({
         'from': acct.address,
         'nonce': w3.eth.get_transaction_count(acct.address),
-        'gas': 300000,
+        'gas': 300000, 
         'gasPrice': w3.eth.gas_price
     })
 
     signed_tx = w3.eth.account.sign_transaction(transaction, private_key=acct.key)
 
-    tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
-    
+    try:
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+    except AttributeError:
+        # Fallback for some Python environments/web3.py versions
+        print("Warning: Failed to find 'rawTransaction', trying 'raw_transaction'.")
+        tx_hash = w3.eth.send_raw_transaction(signed_tx.raw_transaction)
+
     print(f"\nTransaction sent! Waiting for confirmation (Hash: {tx_hash.hex()})...")
 
+    # Wait for the transaction to be mined and confirmed
     receipt = w3.eth.wait_for_transaction_receipt(tx_hash)
     
     if receipt.status == 1:
