@@ -69,9 +69,7 @@ contract AMM is AccessControl{
         }
         
         // 1. Calculate the fee-adjusted amount being deposited
-        // FIX: The double dot '..' is replaced with the correct single dot '.' for SafeMath access.
-        uint256 amountInAfterFee = sellAmount.mul(10000..sub(feebps)).div(10000);
-
+        uint256 amountInAfterFee = sellAmount.mul(10000.sub(feebps)).div(10000);
         // 2. Calculate the amountOut using the Uniswap formula: amountOut = (reserveOut * amountInAfterFee) / (reserveIn + amountInAfterFee)
         uint256 numerator = reserveOut.mul(amountInAfterFee);
         uint256 denominator = reserveIn.add(amountInAfterFee);
