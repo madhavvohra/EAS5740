@@ -3,10 +3,10 @@ pragma solidity ^0.8.17;
 
 import "@openzeppelin/contracts/access/AccessControl.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
-import "@openzeppelin/contracts/utils/math/SafeMath.sol"; // Use SafeMath for clarity on overflow/underflow protection
+// import "@openzeppelin/contracts/utils/math/SafeMath.sol"; // REMOVED
 
 contract AMM is AccessControl{
-    using SafeMath for uint256; // Use SafeMath for all uint256 operations
+    // using SafeMath for uint256; // REMOVED
     
     bytes32 public constant LP_ROLE = keccak256("LP_ROLE");
     uint256 public invariant;
@@ -69,12 +69,15 @@ contract AMM is AccessControl{
         }
         
         // 1. Calculate the fee-adjusted amount being deposited
-        uint256 amountInAfterFee = sellAmount.mul(10000.sub(feebps)).div(10000);
+        // FIXED: Using native math operators instead of SafeMath methods
+        uint256 amountInAfterFee = sellAmount * (10000 - feebps) / 10000;
+
         // 2. Calculate the amountOut using the Uniswap formula: amountOut = (reserveOut * amountInAfterFee) / (reserveIn + amountInAfterFee)
-        uint256 numerator = reserveOut.mul(amountInAfterFee);
-        uint256 denominator = reserveIn.add(amountInAfterFee);
+        // FIXED: Using native math operators
+        uint256 numerator = reserveOut * amountInAfterFee;
+        uint256 denominator = reserveIn + amountInAfterFee;
         
-        uint256 amountOut = numerator.div(denominator);
+        uint256 amountOut = numerator / denominator;
         
         // 3. Ensure the calculated output amount is valid
         require(amountOut > 0, 'Trade requires more liquidity');
@@ -90,7 +93,8 @@ contract AMM is AccessControl{
         uint256 newBalanceA = ERC20(tokenA).balanceOf(address(this));
         uint256 newBalanceB = ERC20(tokenB).balanceOf(address(this));
         
-        uint256 new_invariant = newBalanceA.mul(newBalanceB);
+        // FIXED: Using native math operators
+        uint256 new_invariant = newBalanceA * newBalanceB;
         
         require( new_invariant >= invariant, 'Bad trade: Invariant violation' );
         invariant = new_invariant;
@@ -117,11 +121,12 @@ contract AMM is AccessControl{
         uint256 currentBalanceB = ERC20(tokenB).balanceOf(address(this));
         
         // Check if this is the initial liquidity provision
+        // FIXED: Using native math operators
         if (invariant == 0) {
-            invariant = currentBalanceA.mul(currentBalanceB);
+            invariant = currentBalanceA * currentBalanceB;
         } else {
             // For simplicity, update invariant with new total reserves
-            invariant = currentBalanceA.mul(currentBalanceB);
+            invariant = currentBalanceA * currentBalanceB;
         }
         
         emit LiquidityProvision( msg.sender, amtA, amtB );
@@ -146,7 +151,8 @@ contract AMM is AccessControl{
         }
         
         // Re-calculate and update the invariant with the new, reduced reserves
-        invariant = ERC20(tokenA).balanceOf(address(this)).mul(ERC20(tokenB).balanceOf(address(this)));
+        // FIXED: Using native math operators
+        invariant = ERC20(tokenA).balanceOf(address(this)) * ERC20(tokenB).balanceOf(address(this));
         
         emit Withdrawal( msg.sender, recipient, amtA, amtB );
     }
