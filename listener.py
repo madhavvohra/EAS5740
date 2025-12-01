@@ -29,7 +29,6 @@ def scan_blocks(chain, start_block, end_block, contract_address, eventfile='depo
     else:
         raise ValueError(f"Unsupported chain: {chain}")
 
-    # ABI for the Deposit event
     DEPOSIT_ABI = json.loads('[ { "anonymous": false, "inputs": [ { "indexed": true, "internalType": "address", "name": "token", "type": "address" }, { "indexed": true, "internalType": "address", "name": "recipient", "type": "address" }, { "indexed": false, "internalType": "uint256", "name": "amount", "type": "uint256" } ], "name": "Deposit", "type": "event" }]')
     contract = w3.eth.contract(address=contract_address, abi=DEPOSIT_ABI)
 
@@ -56,35 +55,31 @@ def scan_blocks(chain, start_block, end_block, contract_address, eventfile='depo
 
     all_events = []
     
-    # Logic to handle block range (small vs. large)
-
     if end_block - start_block < 30:
         # Small range: query all at once
-        # FIX 1: Use from_block and to_block (snake_case)
-        event_filter = contract.events.Deposit.createFilter(from_block=start_block,to_block=end_block,argument_filters=arg_filter)
+        # FIX: Use create_filter (snake_case) and from_block/to_block
+        event_filter = contract.events.Deposit.create_filter(from_block=start_block,to_block=end_block,argument_filters=arg_filter)
         events = event_filter.get_all_entries()
         all_events.extend(events)
     else:
         # Large range: iterate block by block
         for block_num in range(start_block,end_block+1):
-            # FIX 2: Use from_block and to_block (snake_case)
-            event_filter = contract.events.Deposit.createFilter(from_block=block_num,to_block=block_num,argument_filters=arg_filter)
+            # FIX: Use create_filter (snake_case) and from_block/to_block
+            event_filter = contract.events.Deposit.create_filter(from_block=block_num,to_block=block_num,argument_filters=arg_filter)
             events = event_filter.get_all_entries()
             all_events.extend(events)
 
     # Process all collected events
     final_data = []
     for evt in all_events:
-        # Get transaction timestamp for the required 'date' column
-        date_str = "N/A" # Initialize to N/A in case block retrieval fails
+        date_str = "N/A" 
         try:
             block = w3.eth.get_block(evt.blockNumber)
             timestamp = block.timestamp
             date_str = datetime.fromtimestamp(timestamp).strftime('%m/%d/%Y %H:%M:%S')
         except Exception:
-            pass # Keep date_str as N/A if block retrieval fails
+            pass
             
-        # Extract required data fields
         data_entry = {
             'chain': chain,
             'token': evt.args['token'],
@@ -104,7 +99,6 @@ def scan_blocks(chain, start_block, end_block, contract_address, eventfile='depo
     if df.empty:
         df = pd.DataFrame(columns=REQUIRED_COLUMNS)
     
-    # Write to CSV
     df.to_csv(
         eventfile,
         index=False,
