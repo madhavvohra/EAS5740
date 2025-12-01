@@ -8,15 +8,6 @@ import pandas as pd
 
 
 def scan_blocks(chain, start_block, end_block, contract_address, eventfile='deposit_logs.csv'):
-    """
-    chain - string (Either 'bsc' or 'avax')
-    start_block - integer first block to scan
-    end_block - integer last block to scan
-    contract_address - the address of the deployed contract
-
-    This function reads "Deposit" events from the specified contract, 
-    and writes information about the events to the file "deposit_logs.csv"
-    """
     if chain == 'avax':
         api_url = f"https://api.avax-test.network/ext/bc/C/rpc" 
 
@@ -56,20 +47,16 @@ def scan_blocks(chain, start_block, end_block, contract_address, eventfile='depo
     all_events = []
     
     if end_block - start_block < 30:
-        # Small range: query all at once
-        # FIX: Use create_filter (snake_case) and from_block/to_block
         event_filter = contract.events.Deposit.create_filter(from_block=start_block,to_block=end_block,argument_filters=arg_filter)
         events = event_filter.get_all_entries()
         all_events.extend(events)
     else:
-        # Large range: iterate block by block
         for block_num in range(start_block,end_block+1):
             # FIX: Use create_filter (snake_case) and from_block/to_block
             event_filter = contract.events.Deposit.create_filter(from_block=block_num,to_block=block_num,argument_filters=arg_filter)
             events = event_filter.get_all_entries()
             all_events.extend(events)
 
-    # Process all collected events
     final_data = []
     for evt in all_events:
         date_str = "N/A" 
@@ -91,7 +78,6 @@ def scan_blocks(chain, start_block, end_block, contract_address, eventfile='depo
         }
         final_data.append(data_entry)
 
-    # Write the data to CSV using pandas
     df = pd.DataFrame(final_data)
     
     REQUIRED_COLUMNS = ['chain', 'token', 'recipient', 'amount', 'transactionHash', 'address', 'date']
