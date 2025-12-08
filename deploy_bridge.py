@@ -65,7 +65,7 @@ def deploy_contract(w3, abi, bytecode, constructor_args, chain_name):
     
     # 3. Sign and Send
     signed_tx = w3.eth.account.sign_transaction(build_tx, private_key=account.key)
-    tx_hash = w3.eth.send_raw_transaction(signed_tx.rawTransaction)
+    tx_hash = w3.eth.send_raw_transaction(signed_tx.raw)
     
     print(f"   Deployment TX sent on {chain_name}: {tx_hash.hex()}")
     
